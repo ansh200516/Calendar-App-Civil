@@ -66,6 +66,7 @@ function App() {
 
   // Check if the current path is an admin-specific route
   const isAdminRoute = location === "/admin" || location === "/notifications";
+  // No need for AuthModal anymore as we're using dedicated login pages
   
   // Admin authentication routes
   if (location === "/admin/login") {

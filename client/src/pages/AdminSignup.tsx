@@ -36,8 +36,11 @@ export default function AdminSignup() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const response = await apiRequest('/api/auth/signup', {
+      const response = await fetch('/api/auth/signup', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           username: values.username,
           password: values.password,
