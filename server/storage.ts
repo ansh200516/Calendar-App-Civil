@@ -1,6 +1,7 @@
 import { 
   users, type User, type InsertUser,
   events, type Event, type InsertEvent,
+  resources, type Resource, type InsertResource,
   notifications, type Notification, type InsertNotification
 } from "@shared/schema";
 
@@ -17,6 +18,12 @@ export interface IStorage {
   updateEvent(id: number, event: Partial<InsertEvent>): Promise<Event | undefined>;
   deleteEvent(id: number): Promise<boolean>;
   
+  // Resource methods
+  getResourcesByEventId(eventId: number): Promise<Resource[]>;
+  getResource(id: number): Promise<Resource | undefined>;
+  createResource(resource: InsertResource): Promise<Resource>;
+  deleteResource(id: number): Promise<boolean>;
+  
   // Notification methods
   getNotifications(): Promise<Notification[]>;
   getNotification(id: number): Promise<Notification | undefined>;
@@ -27,17 +34,21 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private events: Map<number, Event>;
+  private resources: Map<number, Resource>;
   private notifications: Map<number, Notification>;
   private userId: number;
   private eventId: number;
+  private resourceId: number;
   private notificationId: number;
 
   constructor() {
     this.users = new Map();
     this.events = new Map();
+    this.resources = new Map();
     this.notifications = new Map();
     this.userId = 1;
     this.eventId = 1;
+    this.resourceId = 1;
     this.notificationId = 1;
     
     // Set up some default users
@@ -221,6 +232,33 @@ export class MemStorage implements IStorage {
   
   async deleteEvent(id: number): Promise<boolean> {
     return this.events.delete(id);
+  }
+  
+  // Resource methods
+  async getResourcesByEventId(eventId: number): Promise<Resource[]> {
+    return Array.from(this.resources.values()).filter(
+      (resource) => resource.eventId === eventId
+    );
+  }
+  
+  async getResource(id: number): Promise<Resource | undefined> {
+    return this.resources.get(id);
+  }
+  
+  async createResource(insertResource: InsertResource): Promise<Resource> {
+    const id = this.resourceId++;
+    const resource: Resource = {
+      ...insertResource,
+      id,
+      uploadedAt: insertResource.uploadedAt || new Date(),
+      uploadedById: insertResource.uploadedById ?? null
+    };
+    this.resources.set(id, resource);
+    return resource;
+  }
+  
+  async deleteResource(id: number): Promise<boolean> {
+    return this.resources.delete(id);
   }
   
   // Notification methods

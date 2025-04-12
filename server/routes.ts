@@ -1,11 +1,13 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import path from "path";
 import { storage } from "./storage";
-import { insertEventSchema, insertNotificationSchema } from "@shared/schema";
+import { insertEventSchema, insertNotificationSchema, insertResourceSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import session from "express-session";
 import MemoryStore from "memorystore";
+import { upload, deleteFile } from "./file-upload";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up user sessions

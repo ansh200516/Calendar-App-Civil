@@ -22,6 +22,18 @@ export const events = pgTable("events", {
   createdById: integer("created_by_id").references(() => users.id),
 });
 
+export const resources = pgTable("resources", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id").references(() => events.id).notNull(),
+  filename: text("filename").notNull(),
+  originalName: text("original_name").notNull(),
+  filePath: text("file_path").notNull(),
+  fileType: text("file_type").notNull(),
+  fileSize: integer("file_size").notNull(),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+  uploadedById: integer("uploaded_by_id").references(() => users.id),
+});
+
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
   eventId: integer("event_id").references(() => events.id),
@@ -46,6 +58,16 @@ export const insertEventSchema = createInsertSchema(events).pick({
   createdById: true,
 });
 
+export const insertResourceSchema = createInsertSchema(resources).pick({
+  eventId: true,
+  filename: true,
+  originalName: true,
+  filePath: true,
+  fileType: true,
+  fileSize: true,
+  uploadedById: true,
+});
+
 export const insertNotificationSchema = createInsertSchema(notifications).pick({
   eventId: true,
   message: true,
@@ -57,6 +79,9 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type Event = typeof events.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
+
+export type Resource = typeof resources.$inferSelect;
+export type InsertResource = z.infer<typeof insertResourceSchema>;
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
