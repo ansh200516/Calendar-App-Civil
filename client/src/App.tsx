@@ -6,7 +6,8 @@ import NotFound from "@/pages/not-found";
 import Calendar from "@/pages/Calendar";
 import Admin from "@/pages/Admin";
 import Notifications from "@/pages/Notifications";
-import AuthModal from "@/components/AuthModal";
+import AdminLogin from "@/pages/AdminLogin";
+import AdminSignup from "@/pages/AdminSignup";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/store/auth";
 import { useEvents } from "@/store/events";
@@ -44,8 +45,9 @@ function App() {
   }, [checkAuth, fetchEvents, fetchNotifications, toast]);
   
   useEffect(() => {
-    // Redirect to home if not authenticated
-    if (ready && !isAuthenticated && location !== "/") {
+    // Redirect to home if not authenticated and trying to access admin pages
+    if (ready && !isAuthenticated && 
+        (location === "/admin" || location === "/notifications")) {
       navigate("/");
     }
   }, [ready, isAuthenticated, location, navigate]);
@@ -62,20 +64,46 @@ function App() {
     );
   }
 
+  // Check if the current path is an admin-specific route
+  const isAdminRoute = location === "/admin" || location === "/notifications";
+  
+  // Admin authentication routes
+  if (location === "/admin/login") {
+    return (
+      <>
+        <AdminLogin />
+        <Toaster />
+      </>
+    );
+  }
+  
+  if (location === "/admin/signup") {
+    return (
+      <>
+        <AdminSignup />
+        <Toaster />
+      </>
+    );
+  }
+
   return (
     <>
-      {!isAuthenticated && <AuthModal />}
-      
-      {isAuthenticated && (
-        <Layout>
-          <Switch>
-            <Route path="/" component={Calendar} />
-            <Route path="/admin" component={Admin} />
-            <Route path="/notifications" component={Notifications} />
-            <Route component={NotFound} />
-          </Switch>
-        </Layout>
-      )}
+      <Layout>
+        <Switch>
+          {/* Public routes - accessible without login */}
+          <Route path="/" component={Calendar} />
+          
+          {/* Admin routes - require authentication */}
+          <Route path="/admin">
+            {isAuthenticated ? <Admin /> : <AdminLogin />}
+          </Route>
+          <Route path="/notifications">
+            {isAuthenticated ? <Notifications /> : <AdminLogin />}
+          </Route>
+          
+          <Route component={NotFound} />
+        </Switch>
+      </Layout>
       
       <Toaster />
     </>

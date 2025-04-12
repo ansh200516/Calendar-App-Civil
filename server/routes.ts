@@ -2,12 +2,13 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage as defaultStorage } from "./storage";
-import { insertEventSchema, insertNotificationSchema, insertResourceSchema } from "@shared/schema";
+import { insertEventSchema, insertNotificationSchema, insertResourceSchema, insertUserSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import session from "express-session";
 import MemoryStore from "memorystore";
 import { upload, deleteFile } from "./file-upload";
+import { checkAdminIp } from "./middlewares/checkAdminIp";
 
 // Extend Express session to include user property
 declare module 'express-session' {
@@ -38,6 +39,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   // Auth routes
+  // Register admin user (IP restricted)
+  app.post('/api/auth/signup', checkAdminIp, async (req: Request, res: Response) => {
+    try {
+      const { username, password, isAdmin } = req.body;
+      
+      // Validate input
+      const validatedData = insertUserSchema.parse({
+        username,
+        password,
+        isAdmin: isAdmin === true // Ensure explicit boolean
+      });
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(409).json({ message: 'User already exists' });
+      }
+      
+      // Create user
+      const user = await storage.createUser(validatedData);
+      
+      // Return user without password
+      const { password: _, ...userWithoutPassword } = user;
+      return res.status(201).json({ user: userWithoutPassword });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      
+      console.error('Error creating user:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+  
   app.post('/api/auth/login', async (req: Request, res: Response) => {
     const { username, password } = req.body;
     
