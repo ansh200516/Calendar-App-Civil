@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
-import { storage } from "./storage";
+import { storage as defaultStorage } from "./storage";
 import { insertEventSchema, insertNotificationSchema, insertResourceSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -21,6 +21,8 @@ declare module 'express-session' {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Use global storage if available, otherwise use default
+  const storage = (global as any).storage || defaultStorage;
   // Set up user sessions
   const SessionStore = MemoryStore(session);
   app.use(

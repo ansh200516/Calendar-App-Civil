@@ -37,7 +37,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// Import MongoDB connection
+import { connectToMongoDB } from './mongo';
+import { MongoStorage } from './mongo-storage';
+import { storage as memStorage } from './storage';
+
 (async () => {
+  try {
+    // Connect to MongoDB
+    await connectToMongoDB();
+    console.log('Connected to MongoDB successfully');
+    
+    // Switch to MongoDB storage
+    // @ts-ignore - Intentionally overriding the storage
+    global.storage = new MongoStorage();
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error);
+    console.log('Falling back to in-memory storage');
+    // Keep using the memory storage
+  }
+  
   const server = await registerRoutes(app);
   
   // Serve static files from uploads directory
