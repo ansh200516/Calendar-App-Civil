@@ -236,6 +236,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Resource routes
+  // Get resources for a specific event
+  app.get('/api/events/:eventId/resources', async (req: Request, res: Response) => {
+    try {
+      const eventId = parseInt(req.params.eventId);
+      
+      if (isNaN(eventId)) {
+        return res.status(400).json({ message: 'Invalid event ID' });
+      }
+      
+      const eventExists = await storage.getEvent(eventId);
+      
+      if (!eventExists) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+      
+      const resources = await storage.getResourcesByEventId(eventId);
+      return res.status(200).json(resources);
+    } catch (error) {
+      console.error('Error fetching resources:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Upload a resource file for an event
+  app.post('/api/events/:eventId/resources', isAdmin, upload.single('file'), async (req: Request, res: Response) => {
+    try {
+      const eventId = parseInt(req.params.eventId);
+      
+      if (isNaN(eventId)) {
+        return res.status(400).json({ message: 'Invalid event ID' });
+      }
+      
+      const eventExists = await storage.getEvent(eventId);
+      
+      if (!eventExists) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+      
+      // Check if file was uploaded
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+      
+      const userId = req.session.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User ID not found' });
+      }
+      
+      // Create resource data
+      const resourceData = {
+        eventId: eventId,
+        filename: req.file.filename,
+        originalName: req.file.originalname,
+        filePath: `uploads/${req.file.filename}`,
+        fileType: req.file.mimetype,
+        fileSize: req.file.size,
+        uploadedById: userId
+      };
+      
+      const resource = await storage.createResource(resourceData);
+      return res.status(201).json(resource);
+    } catch (error) {
+      console.error('Error uploading resource:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Download a resource file
+  app.get('/api/resources/:id/download', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid resource ID' });
+      }
+      
+      const resource = await storage.getResource(id);
+      
+      if (!resource) {
+        return res.status(404).json({ message: 'Resource not found' });
+      }
+      
+      const filePath = path.join(process.cwd(), resource.filePath);
+      
+      // Set Content-Disposition header to attachment with the original filename
+      res.setHeader('Content-Disposition', `attachment; filename="${resource.originalName}"`);
+      
+      // Send the file
+      return res.download(filePath, resource.originalName);
+    } catch (error) {
+      console.error('Error downloading resource:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Delete a resource file
+  app.delete('/api/resources/:id', isAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid resource ID' });
+      }
+      
+      const resource = await storage.getResource(id);
+      
+      if (!resource) {
+        return res.status(404).json({ message: 'Resource not found' });
+      }
+      
+      // Delete the file from the filesystem
+      const deleted = await deleteFile(resource.filePath);
+      
+      if (!deleted) {
+        return res.status(500).json({ message: 'Failed to delete file' });
+      }
+      
+      // Delete the resource from storage
+      await storage.deleteResource(id);
+      
+      return res.status(200).json({ message: 'Resource deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting resource:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Serve static files from uploads directory
+  app.use('/uploads', (req: Request, res: Response, next: NextFunction) => {
+    // Check if user is authenticated before allowing access to files
+    if (!req.session.user) {
+      return res.status(401).json({ message: 'Authentication required to access files' });
+    }
+    next();
+  });
+  
   const httpServer = createServer(app);
   return httpServer;
 }

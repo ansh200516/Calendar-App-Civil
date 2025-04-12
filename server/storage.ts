@@ -250,7 +250,7 @@ export class MemStorage implements IStorage {
     const resource: Resource = {
       ...insertResource,
       id,
-      uploadedAt: insertResource.uploadedAt || new Date(),
+      uploadedAt: new Date(),
       uploadedById: insertResource.uploadedById ?? null
     };
     this.resources.set(id, resource);

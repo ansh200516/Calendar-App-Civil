@@ -3,10 +3,12 @@ import { Event } from "@shared/schema";
 import { formatDate, formatTime } from "@/lib/date-utils";
 import { useEvents } from "@/store/events";
 import { useAuth } from "@/store/auth";
-import { Dialog, DialogContent, DialogHeader, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EventModal from "@/components/EventModal";
-import { MapPin, Calendar, Clock } from "lucide-react";
+import ResourceManager from "@/components/ResourceManager";
+import { MapPin, Calendar, Clock, FileText } from "lucide-react";
 
 interface EventDetailsModalProps {
   event: Event;
@@ -46,44 +48,52 @@ export default function EventDetailsModal({ event, onClose }: EventDetailsModalP
   return (
     <>
       <Dialog open={true} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <div className="flex items-center">
+            <div className="flex items-center mb-2">
               <div className={`w-4 h-4 rounded-full ${getCategoryColor(event.category)} mr-2`}></div>
-              <h2 className="text-xl font-heading font-bold text-gray-800">{event.title}</h2>
+              <DialogTitle className="text-xl font-heading font-bold text-gray-800">{event.title}</DialogTitle>
+            </div>
+            <div className="flex items-center text-gray-500 text-sm">
+              <Calendar className="h-4 w-4 mr-1" />
+              <span>{formatDate(event.date)}</span>
+              <span className="mx-1">•</span>
+              <Clock className="h-4 w-4 mr-1" />
+              <span>{formatTime(event.time)}</span>
+              {event.location && (
+                <>
+                  <span className="mx-1">•</span>
+                  <MapPin className="h-4 w-4 mr-1" />
+                  <span>{event.location}</span>
+                </>
+              )}
             </div>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div className="flex items-center text-gray-500">
-              <Calendar className="h-5 w-5 mr-2" />
-              <span>{formatDate(event.date)}</span>
-              <span className="mx-2">•</span>
-              <Clock className="h-5 w-5 mr-2" />
-              <span>{formatTime(event.time)}</span>
-            </div>
+          <Tabs defaultValue="details" className="mt-2">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="resources">Resources</TabsTrigger>
+            </TabsList>
             
-            {event.location && (
-              <div className="flex items-center text-gray-500">
-                <MapPin className="h-5 w-5 mr-2" />
-                <span>{event.location}</span>
+            <TabsContent value="details" className="space-y-4 py-4">
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-gray-900">Description</h3>
+                <p className="text-sm text-gray-600">{event.description}</p>
               </div>
-            )}
-            
-            <div className="pt-2">
-              <h3 className="text-sm font-medium text-gray-900">Description</h3>
-              <p className="mt-1 text-sm text-gray-600">{event.description}</p>
-            </div>
-            
-            <div className="pt-2">
-              <h3 className="text-sm font-medium text-gray-900">Category</h3>
-              <div className="mt-1">
-                {getCategoryBadge(event.category)}
+              
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-gray-900">Category</h3>
+                <div>{getCategoryBadge(event.category)}</div>
               </div>
-            </div>
-          </div>
+            </TabsContent>
+            
+            <TabsContent value="resources">
+              <ResourceManager eventId={event.id} />
+            </TabsContent>
+          </Tabs>
           
-          <DialogFooter className="sm:justify-end">
+          <DialogFooter className="sm:justify-end pt-4 border-t">
             <Button
               variant="outline"
               onClick={onClose}
