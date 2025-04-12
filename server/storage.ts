@@ -1,9 +1,12 @@
 import { 
-  users, type User, type InsertUser,
-  events, type Event, type InsertEvent,
-  resources, type Resource, type InsertResource,
-  notifications, type Notification, type InsertNotification
+  users, events, resources, notifications,
+  type User, type InsertUser,
+  type Event, type InsertEvent,
+  type Resource, type InsertResource,
+  type Notification, type InsertNotification
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -54,7 +57,7 @@ export class MemStorage implements IStorage {
     // Set up some default users
     this.createUser({
       username: 'admin@example.com',
-      password: 'password',
+      password: 'admin123',
       isAdmin: true
     });
     
@@ -293,4 +296,119 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+  
+  async getEvents(): Promise<Event[]> {
+    return db.select().from(events);
+  }
+  
+  async getEvent(id: number): Promise<Event | undefined> {
+    const [event] = await db.select().from(events).where(eq(events.id, id));
+    return event || undefined;
+  }
+  
+  async createEvent(insertEvent: InsertEvent): Promise<Event> {
+    const [event] = await db
+      .insert(events)
+      .values(insertEvent)
+      .returning();
+    return event;
+  }
+  
+  async updateEvent(id: number, updateEvent: Partial<InsertEvent>): Promise<Event | undefined> {
+    const [updatedEvent] = await db
+      .update(events)
+      .set(updateEvent)
+      .where(eq(events.id, id))
+      .returning();
+    return updatedEvent || undefined;
+  }
+  
+  async deleteEvent(id: number): Promise<boolean> {
+    const result = await db
+      .delete(events)
+      .where(eq(events.id, id))
+      .returning({ id: events.id });
+    return result.length > 0;
+  }
+  
+  async getResourcesByEventId(eventId: number): Promise<Resource[]> {
+    return db
+      .select()
+      .from(resources)
+      .where(eq(resources.eventId, eventId));
+  }
+  
+  async getResource(id: number): Promise<Resource | undefined> {
+    const [resource] = await db
+      .select()
+      .from(resources)
+      .where(eq(resources.id, id));
+    return resource || undefined;
+  }
+  
+  async createResource(insertResource: InsertResource): Promise<Resource> {
+    const [resource] = await db
+      .insert(resources)
+      .values(insertResource)
+      .returning();
+    return resource;
+  }
+  
+  async deleteResource(id: number): Promise<boolean> {
+    const result = await db
+      .delete(resources)
+      .where(eq(resources.id, id))
+      .returning({ id: resources.id });
+    return result.length > 0;
+  }
+  
+  async getNotifications(): Promise<Notification[]> {
+    return db.select().from(notifications);
+  }
+  
+  async getNotification(id: number): Promise<Notification | undefined> {
+    const [notification] = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.id, id));
+    return notification || undefined;
+  }
+  
+  async createNotification(insertNotification: InsertNotification): Promise<Notification> {
+    const [notification] = await db
+      .insert(notifications)
+      .values(insertNotification)
+      .returning();
+    return notification;
+  }
+  
+  async markNotificationAsSent(id: number): Promise<boolean> {
+    const result = await db
+      .update(notifications)
+      .set({ sent: true })
+      .where(eq(notifications.id, id))
+      .returning({ id: notifications.id });
+    return result.length > 0;
+  }
+}
+
+// Use DatabaseStorage instead of MemStorage
+export const storage = new DatabaseStorage();
