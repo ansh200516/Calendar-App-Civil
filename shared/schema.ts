@@ -66,6 +66,9 @@ export const insertResourceSchema = createInsertSchema(resources).pick({
   fileType: true,
   fileSize: true,
   uploadedById: true,
+  uploadedAt: true,
+}).omit({
+  uploadedAt: true,
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).pick({

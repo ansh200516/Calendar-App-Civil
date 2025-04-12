@@ -9,6 +9,17 @@ import session from "express-session";
 import MemoryStore from "memorystore";
 import { upload, deleteFile } from "./file-upload";
 
+// Extend Express session to include user property
+declare module 'express-session' {
+  interface SessionData {
+    user: {
+      id: number;
+      username: string;
+      isAdmin: boolean;
+    };
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up user sessions
   const SessionStore = MemoryStore(session);
