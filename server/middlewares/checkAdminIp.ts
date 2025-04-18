@@ -10,7 +10,7 @@ export function checkAdminIp(req: Request, res: Response, next: NextFunction) {
   
   // Check if it's the allowed admin IP
   // const allowedIp = '10.184.6.180';
-  const allowedIp='10.184.15.125'; // Replace with your actual admin IP
+  const allowedIp='103.27.10.65'; // Replace with your actual admin IP
   // For local development, you might want to allow localhost
   // const allowedIp = '::1'; // IPv6 localhost
 
