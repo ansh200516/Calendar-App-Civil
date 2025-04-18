@@ -69,7 +69,7 @@ const NOTIFICATION_RECIPIENTS = ['ce1231156@iitd.ac.in', 'ansh.singh.160305@gmai
   "ce1231109@civil.iitd.ac.in",
   "ce1231223@civil.iitd.ac.in",
   "ce1230454@iitd.ac.in",
-  "ce1231073@civil.iitd.ac in",
+  "ce1231073@civil.iitd.ac.in",
   "ce1231180@iitd.ac.in",
   "ce1230370@civil.iitd.ac.in",
   "ce1231043@iitd.ac.in",
