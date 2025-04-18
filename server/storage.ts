@@ -414,4 +414,4 @@ export class DatabaseStorage implements IStorage {
 import { MongoStorage } from './mongo-storage';
 
 // Use MongoStorage instead of DatabaseStorage or MemStorage
-export const storage = new MemStorage(); // Temporarily use MemStorage until MongoDB is connected
+export const storage = new MongoStorage(); // Temporarily use MemStorage until MongoDB is connected

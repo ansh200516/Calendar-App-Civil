@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import NotFound from "@/pages/not-found";
 import Calendar from "@/pages/Calendar";
 import Admin from "@/pages/Admin";
+import StudentNotifications from "@/pages/StudentNotifications"; // Make sure the path and casing are correct
 import Notifications from "@/pages/Notifications";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminSignup from "@/pages/AdminSignup";
@@ -12,6 +13,7 @@ import Layout from "@/components/Layout";
 import { useAuth } from "@/store/auth";
 import { useEvents } from "@/store/events";
 import { useNotifications } from "@/store/notifications";
+
 
 function App() {
   const [ready, setReady] = useState(false);
@@ -47,8 +49,12 @@ function App() {
   useEffect(() => {
     // Redirect to home if not authenticated and trying to access admin pages
     if (ready && !isAuthenticated && 
-        (location === "/admin" || location === "/notifications")) {
+        (location === "/admin")) {
       navigate("/");
+    }
+    if (ready && !isAuthenticated && 
+        (location === "/notifications")) {
+      navigate("/studentnotifications");
     }
   }, [ready, isAuthenticated, location, navigate]);
 
@@ -101,6 +107,8 @@ function App() {
           <Route path="/notifications">
             {isAuthenticated ? <Notifications /> : <AdminLogin />}
           </Route>
+          <Route path="/studentnotifications" component={StudentNotifications} />
+
           
           <Route component={NotFound} />
         </Switch>

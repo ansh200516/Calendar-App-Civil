@@ -1,7 +1,8 @@
 import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
-
+import dotenv from 'dotenv';
+dotenv.config();
 // Create a MongoDB connection string
-// If using Replit's MongoDB, it would be in environment variables
+
 const uri = process.env.MONGODB_URI || "mongodb://localhost:27017";
 
 // Create a MongoClient with a MongoClientOptions object

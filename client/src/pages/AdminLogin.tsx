@@ -9,6 +9,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
+import { useLocation } from 'wouter';
+
 
 const formSchema = z.object({
   username: z.string().email({ message: 'Please enter a valid email address' }),
@@ -28,6 +30,8 @@ export default function AdminLogin() {
     },
   });
 
+  const [, navigate] = useLocation();
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
@@ -36,6 +40,7 @@ export default function AdminLogin() {
         title: 'Logged in successfully',
         description: 'Welcome back, admin!',
       });
+      navigate('/admin'); // 👈 Redirect to Admin page
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -47,6 +52,7 @@ export default function AdminLogin() {
       setIsLoading(false);
     }
   }
+  
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40">
