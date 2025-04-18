@@ -67,7 +67,7 @@ export default function Calendar() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div className="mb-4 sm:mb-0">
           <h2 className="text-2xl font-heading font-bold text-gray-800">Calendar</h2>
-          <p className="text-sm text-gray-600">View and manage academic events</p>
+          <p className="text-sm text-gray-600">Pool of events and resources</p>
         </div>
         
         <div className="flex items-center space-x-2">
