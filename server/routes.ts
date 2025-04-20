@@ -481,17 +481,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
               if (req.file) { await deleteFile(`uploads/${req.file.filename}`).catch(console.error); }
               return res.status(401).json({ message: 'User ID not found in session' });
           }
+          const relativeFilePath = path.join('uploads', req.file.filename);
 
           const resourceData = {
-              eventId: eventId,
-              filename: req.file.filename,
-              originalName: req.file.originalname,
-              filePath: `uploads/${req.file.filename}`,
-              fileType: req.file.mimetype,
-              fileSize: req.file.size,
-              uploadedById: userId
-              // uploadedAt will likely be set by the DB/storage layer
-          };
+            eventId: eventId,
+            filename: req.file.filename,      // Keep unique generated name if needed
+            originalName: req.file.originalname,
+            // Store the RELATIVE path within the persistent disk
+            filePath: relativeFilePath,       // STORE THIS (e.g., uploads/file-123.pdf)
+            fileType: req.file.mimetype,
+            fileSize: req.file.size,
+            uploadedById: userId
+        };
 
           // Validate resourceData if needed (using insertResourceSchema)
           // const validatedResourceData = insertResourceSchema.parse(resourceData); // Might need adjustment
@@ -506,39 +507,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
   });
 
-  app.get('/api/resources/:id/download', async (req: Request, res: Response) => {
-      try {
-          const id = req.params.id;
-          if (!id || !/^[a-f\d]{24}$/i.test(id)) {
-              return res.status(400).json({ message: 'Invalid resource ID format' });
-          }
-          const resource = await storage.getResource(id);
-          if (!resource) {
-              return res.status(404).json({ message: 'Resource not found' });
-          }
-          const filePath = path.join(process.cwd(), resource.filePath);
-          res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(resource.originalName)}`);
-
-          return res.download(filePath, resource.originalName, (err) => {
-              if (err) {
-                  console.error("Error sending file:", err);
-                  if (!res.headersSent) {
-                      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-                          return res.status(404).json({ message: 'File not found on server' });
-                      } else {
-                          return res.status(500).json({ message: 'Error downloading file' });
-                      }
-                  }
-              }
-          });
-      } catch (error) {
-          console.error('Error downloading resource:', error);
-          // Avoid sending JSON response if headers already sent (e.g., during download)
-          if (!res.headersSent) {
-              return res.status(500).json({ message: 'Internal server error' });
-          }
+// Inside GET /api/resources/:id/download
+app.get('/api/resources/:id/download', async (req: Request, res: Response) => {
+  try {
+      const id = req.params.id;
+      if (!id || !/^[a-f\d]{24}$/i.test(id)) {
+          return res.status(400).json({ message: 'Invalid resource ID format' });
       }
-  });
+      const resource = await storage.getResource(id);
+      if (!resource) {
+          return res.status(404).json({ message: 'Resource record not found' });
+      }
+
+      // --- Get Persistent Disk Path ---
+      const mountPath = process.env.RENDER_DISK_MOUNT_PATH;
+      if (!mountPath) {
+          console.error("FATAL: RENDER_DISK_MOUNT_PATH environment variable is not set!");
+          return res.status(500).json({ message: 'Server configuration error (disk path missing)' });
+      }
+
+      // --- Construct Full Path ---
+      // Assumes resource.filePath is stored like "uploads/file-abc.pdf"
+      const filePath = path.join(mountPath, resource.filePath);
+      console.log(`Attempting to download file from: ${filePath}`); // Logging
+
+      // --- Check File Existence (Crucial Debug Step) ---
+      try {
+          // Use fs.promises.access for async check
+          await fs.promises.access(filePath, fs.constants.R_OK); // Check read access
+          console.log(`File exists and is readable: ${filePath}`);
+      } catch (err: any) {
+           console.error(`File not found or not readable at path ${filePath}:`, err);
+           // Send a specific 404 if the file itself is missing on disk
+           return res.status(404).json({ message: 'File not found on server storage.' });
+      }
+
+      // --- Send File ---
+      // Set header *before* calling download/sendFile
+       res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(resource.originalName)}`);
+
+      // Use res.download (it handles Content-Type etc.)
+      return res.download(filePath, resource.originalName, (err) => {
+          if (err) {
+              console.error(`Error during file download stream for ${filePath}:`, err);
+              // Avoid sending another response if headers were already sent
+              if (!res.headersSent) {
+                   // Check error type if possible
+                   if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+                      // This shouldn't happen if the access check above passed, but maybe a race condition?
+                       return res.status(404).json({ message: 'File disappeared before sending' });
+                   } else {
+                       return res.status(500).json({ message: 'Error sending file' });
+                   }
+              } else {
+                   // If headers are sent, the connection might be broken. Nothing much to do here.
+                   console.error("Headers already sent, could not send error response for download failure.");
+              }
+          } else {
+              console.log(`Successfully initiated download for ${filePath}`);
+          }
+      });
+
+  } catch (error) {
+      console.error('Error processing resource download request:', error);
+      if (!res.headersSent) {
+          return res.status(500).json({ message: 'Internal server error processing download' });
+      }
+  }
+});
 
   app.delete('/api/resources/:id', isAdmin, async (req: Request, res: Response) => {
       try {
@@ -553,12 +589,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Attempt to delete file first
           try {
-              await deleteFile(resource.filePath);
-          } catch (fileError) {
-              console.error(`Failed to delete file from filesystem: ${resource.filePath}. Error: ${fileError}. Proceeding to delete database record.`);
-              // Decide if this should be a hard failure or just a warning
-              // return res.status(500).json({ message: 'Failed to delete file from filesystem, database record not deleted' });
-          }
+            // Pass the relative path stored in the DB
+            await deleteFile(resource.filePath);
+        } catch (fileError) {
+            console.error(`Failed to delete file from filesystem: ${resource.filePath}. Error: ${fileError}. Proceeding to delete database record.`);
+            // Decide if this is critical. If the DB record is deleted, the file is orphaned.
+            // You might want to return 500 here if file deletion fails.
+            // return res.status(500).json({ message: 'Failed to delete file from filesystem, database record not deleted' });
+        }
 
           await storage.deleteResource(id);
           return res.status(200).json({ message: 'Resource deleted successfully' });
