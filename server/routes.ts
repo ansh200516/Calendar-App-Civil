@@ -20,6 +20,7 @@ import { checkAdminIp } from "./middlewares/checkAdminIp";
 // --- Email Sending Imports and Setup ---
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import fs from 'fs';
 
 dotenv.config(); // Load environment variables
 
