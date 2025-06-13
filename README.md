@@ -1,176 +1,225 @@
-# Calendar App
+# Calendar App – Civil Department Scheduler
 
-A full-featured calendar application.
+A full-stack calendar and notification platform built for academic departments. Administrators can create events (quizzes, deadlines, lectures, …), attach resources, and schedule e-mail / in-app reminders that are automatically delivered to students.  Students get a beautiful responsive calendar with instant updates.
 
-## Table of Contents
+---
 
-- [About The Project](#about-the-project)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [Available Scripts](#available-scripts)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [API Endpoints](#api-endpoints)
-- [License](#license)
-- [Contact](#contact)
+## Table of contents
+1.  [Key features](#key-features)
+2.  [Tech stack](#tech-stack)
+3.  [Project layout](#project-layout)
+4.  [Quick start](#quick-start)
+5.  [Environment variables](#environment-variables)
+6.  [Database seeding](#database-seeding)
+7.  [Available npm scripts](#available-npm-scripts)
+8.  [REST API overview](#rest-api-overview)
+9.  [Deployment](#deployment)
+10. [Contributing](#contributing)
+11. [License](#license)
 
-## About The Project
+---
 
-A full-featured calendar application built with a modern tech stack. This application allows users to manage their schedules, events, and tasks efficiently. It features a secure authentication system and a responsive user interface.
+## Key features
+• **Role-based access** – Admins manage the calendar & notifications while students have read-only access.<br/>
+• **Event categories** – _deadline_, _quiz_, or _other_ (extensible).<br/>
+• **Rich resources** – Upload files (PDFs, images, ZIPs …) that are linked to an event and served from `/uploads/*`.<br/>
+• **Scheduled notifications** – A background task checks pending notifications every minute and sends e-mails (with [Nodemailer](https://nodemailer.com/)) plus in-app toasts.
+• **E-mail opt-in/out** – Toggle e-mails via the `EMAIL_NOTIFICATIONS_ENABLED` flag.
+• **Responsive UI** – Built with React 18, Tailwind CSS and shadcn/ui components. Works great on mobile & desktop.
+• **Shared type-safe schema** – Front-end and back-end both import validation/typing from `shared/schema.ts` (Zod).
+• **Pluggable storage** – Memory implementation for demos, MongoDB implementation for production (see `server/mongo-storage.ts`).
+• **Single-command dev server** – `npm run dev` launches Express & Vite with hot-reloading for both layers.
 
+---
 
-## Tech Stack
+## Tech stack
+### Front-end
+* Vite + React 18 + TypeScript
+* Tailwind CSS & [shadcn/ui](https://ui.shadcn.com/)  
+  (Radix primitives)
+* Zustand for state management
+* TanStack React Query for asynchronous data fetching & caching
+* Wouter for SPA routing
 
-- **Frontend:** React, TypeScript, Vite, Tailwind CSS, TanStack Query, Radix UI 
-- **Backend:** Node.js, Express.js, TypeScript
-- **Database:** MongoDB
-- **Authentication:** Passport.js, JWT, bcrypt
+### Back-end
+* Node.js + TypeScript + Express  
+  (served through Vite middleware in development)
+* MongoDB (native driver) with optional in-memory fallback
+* Drizzle ORM (schema definition only – currently not used at runtime)
+* Multer for file uploads
+* Nodemailer for e-mail delivery
 
-## Getting Started
+### Tooling
+* Vite & ESBuild for bundling
+* TS-X for TypeScript runtime during development
+* Jest/Vitest ⚠ (not yet configured – PRs welcome!)
 
-To get a local copy up and running follow these simple steps.
+---
 
-### Prerequisites
-
-- Node.js (v20.x or higher recommended)
-- npm
-  ```sh
-  npm install npm@latest -g
-  ```
-
-### Installation
-
-1. Clone the repo
-   ```sh
-   git clone https://github.com/your_username_/Project-Name.git
-   ```
-2. Install NPM packages. This will install both server and client dependencies.
-   ```sh
-   npm install
-   ```
-3. Set up your environment variables. Create a `.env` file in the root of the project and add the necessary variables.
-
-   ```ini
-   # MongoDB Configuration
-   MONGODB_URI=mongodb://localhost:27017/calendar-app
-
-   # Express Session Secret
-   SESSION_SECRET=your-very-secret-key
-
-   # Email Notifications (using nodemailer)
-   # Enable or disable email notifications
-   EMAIL_NOTIFICATIONS_ENABLED=true
-
-   # SMTP Server details
-   EMAIL_HOST=smtp.example.com
-   EMAIL_PORT=587
-   EMAIL_USER=user@example.com
-   EMAIL_PASS=your-email-password
-   EMAIL_FROM="Your App Name" <noreply@example.com>
-
-   # Optional: For file uploads when deploying on Render
-   # RENDER_DISK_MOUNT_PATH=/var/data/uploads
-   ```
-
-## Available Scripts
-
-In the project directory, you can run:
-
-- `npm run dev`: Runs the app in the development mode.
-- `npm run build`: Builds the app for production to the `dist` folder.
-- `npm run start`: Runs the built app in production mode.
-- `npm run db:push`: Pushes the drizzle schema changes to the database.
-- `npm run check`: Type-checks the project files.
-
-## Usage
-
-*(Instructions on how to use the application will be added here.)*
-
-## Project Structure
-
-The project is a monorepo with the client and server code in separate directories.
-
+## Project layout
 ```
 .
-├── client/         # Frontend code (React, Vite)
+├── client/            # React front-end (Vite root)
 │   ├── src/
-│   │   ├── components/
-│   │   ├── lib/
-│   │   ├── pages/
-│   │   ├── App.tsx
-│   │   └── main.tsx
-│   └── ...
-├── server/         # Backend code (Express.js)
-│   ├── src/
-│   │   ├── db/
-│   │   ├── middleware/
-│   │   ├── models/
-│   │   ├── routes/
-│   │   └── index.ts
-│   └── ...
-├── uploads/        # Directory for file uploads
-├── drizzle.config.ts # Drizzle ORM configuration (currently unused)
-├── package.json    # Project dependencies and scripts
-├── tailwind.config.ts # Tailwind CSS configuration
-├── tsconfig.json   # TypeScript configuration
-└── vite.config.ts  # Vite configuration
+│   │   ├── components/  # Reusable UI + modals
+│   │   ├── pages/       # Route-level screens
+│   │   ├── hooks/       # Custom hooks
+│   │   ├── store/       # Zustand stores
+│   │   └── lib/         # Utilities (API helper, date utils …)
+│   └── index.html       # Vite entry template
+│
+├── server/            # Express API + background jobs
+│   ├── routes.ts        # All REST endpoints
+│   ├── index.ts         # Server bootstrap (Dev & Prod)
+│   ├── mongo.ts         # DB connection helper
+│   ├── storage.ts       # In-memory implementation (demo)
+│   ├── mongo-storage.ts # MongoDB implementation (prod)
+│   ├── seed-*.ts        # DB seed scripts (memory & Mongo)
+│   └── middlewares/
+│
+├── shared/            # Cross-package types (Zod schemas)
+│
+├── uploads/           # Runtime file uploads (git-ignored)
+├── vite.config.ts     # Shared Vite config
+├── tailwind.config.ts # Tailwind theme config
+└── package.json
 ```
 
-A brief explanation of the key directories:
+---
 
--   `client`: Contains the React frontend application.
-    -   `client/src`: Main source code for the client.
-        -   `components`: Reusable React components.
-        -   `lib`: Helper functions and libraries.
-        -   `pages`: Main pages of the application.
--   `server`: Contains the Express.js backend application.
-    -   `server/src`: Main source code for the server.
-        -   `db`: Database connection and schema.
-        -   `middleware`: Express middleware.
-        -   `models`: Mongoose models.
-        -   `routes`: API routes.
--   `uploads`: Stores files uploaded by users.
+## Quick start
+### Prerequisites
+* **Node.js ≥ 18** (tested with 20.x)
+* **npm** (or pnpm / yarn)
+* **MongoDB** running locally or in the cloud (only needed for persistent storage)
 
-## API Endpoints
+```bash
+# 1. Clone
+$ git clone https://github.com/your-org/calendar-app.git && cd calendar-app
 
-The server exposes the following REST API endpoints.
+# 2. Install dependencies (root-level monorepo)
+$ npm install
 
-### Authentication
+# 3. Configure environment
+$ cp .env.example .env
+# → edit values (see table below)
 
-| Method | Endpoint          | Description                    |
-| ------ | ----------------- | ------------------------------ |
-| POST   | `/api/auth/signup`| Register a new user (admin only) |
-| POST   | `/api/auth/login` | Login a user                   |
-| POST   | `/api/auth/logout`| Logout a user                  |
-| GET    | `/api/auth/user`  | Get the current authenticated user |
+# 4. Seed database (optional but recommended)
+$ npm run seed:mongo   # creates sample admin user + demo events
+
+# 5. Launch dev server (backend + frontend)
+$ npm run dev
+
+# 6. Open http://localhost:5001  (port configurable via server/index.ts)
+```
+You should now see the calendar. Log in via the **admin** account created by the seed script (`admin@example.com` / `admin123`).
+
+---
+
+## Environment variables
+Create a `.env` file in the project root.  All variables are optional – defaults will be used when possible – but you'll want to override at least the database & session secret for production.
+
+| Variable | Example | Required | Description |
+|----------|---------|----------|-------------|
+| `MONGODB_URI` | `mongodb://localhost:27017` | ✓ | Connection string to your MongoDB instance |
+| `SESSION_SECRET` | `change-me-in-prod` | ✓ | Used to sign Express sessions |
+| `EMAIL_NOTIFICATIONS_ENABLED` | `true` |   | Toggle e-mail delivery of notifications |
+| `EMAIL_HOST` | `smtp.gmail.com` | when e-mail enabled | SMTP host |
+| `EMAIL_PORT` | `587` | when e-mail enabled | SMTP port (465 for SSL) |
+| `EMAIL_USER` | `bot@university.edu` | when e-mail enabled | SMTP user |
+| `EMAIL_PASS` | `app-password` | when e-mail enabled | SMTP password or app password |
+| `EMAIL_FROM` | `"Calendar App" <bot@university.edu>` | – | Custom **from** header |
+| `NOTIFICATION_RECIPIENTS` | (hard-coded array in `server/routes.ts`) | – | Recipients list (feel free to externalise to ENV) |
+
+> **Note** – If `MONGODB_URI` is not set the server falls back to an in-memory store; data will be lost whenever the process restarts.
+
+---
+
+## Database seeding
+Two seed scripts ship with the repo:
+
+* `npm run seed:mongo` → executes `server/seed-mongodb.ts`  (creates admin user, 10 demo events, 3 notifications)
+* `npm run seed:memory` → runs `server/seed-database.ts`  (for the in-memory store)
+
+Feel free to modify the scripts to better fit your class schedule.
+
+---
+
+## Available npm scripts
+| Script | Purpose |
+|--------|---------|
+| `dev` | Launch Express + Vite in development (hot reload) |
+| `build` | Build production assets (bundles client & server to `dist/`) |
+| `start` | Start the **production** server (`NODE_ENV=production`) |
+| `check` | Type-check with `tsc` |
+| `db:push` | Push Drizzle schema migrations (PostgreSQL – experimental) |
+
+---
+
+## REST API overview
+_All routes are prefixed with `/api`.  The front-end uses `fetch` with `credentials: "include"` so you can easily test in Postman by enabling cookies._
+
+### Auth
+| Method | Route | Description |
+|--------|-------|-------------|
+| `POST` | `/auth/signup` | Create a new user (admin only – guarded by IP middleware) |
+| `POST` | `/auth/login` | Log in, starts session |
+| `POST` | `/auth/logout` | Log out |
+| `GET`  | `/auth/user` | Current session user (401 if not signed in) |
 
 ### Events
+| `GET /events` | List all events (sorted by date) |
+| `GET /events/:id` | Single event |
+| `POST /events` | Create (admin) |
+| `PATCH /events/:id` | Update (admin) |
+| `DELETE /events/:id` | Delete (admin) |
 
-| Method | Endpoint         | Description                   |
-| ------ | ---------------- | ----------------------------- |
-| GET    | `/api/events`    | Get all events                |
-| GET    | `/api/events/:id`| Get a single event by ID      |
-| POST   | `/api/events`    | Create a new event (admin only) |
-| PUT    | `/api/events/:id`| Update an event (admin only)  |
-| DELETE | `/api/events/:id`| Delete an event (admin only)  |
+### Resources
+| `POST /events/:id/resources` | Attach file (multipart/form-data) |
+| `GET  /resources/:id` | Download file |
+| `DELETE /resources/:id` | Delete file |
 
 ### Notifications
+| `GET /notifications` | List scheduled notifications |
+| `POST /notifications` | Schedule a new notification |
+| `PATCH /notifications/:id` | Mark as sent |
 
-| Method | Endpoint                          | Description                        |
-| ------ | --------------------------------- | ---------------------------------- |
-| GET    | `/api/notifications`              | Get all notifications              |
-| POST   | `/api/notifications`              | Create a new notification (admin only) |
-| PUT    | `/api/notifications/:id/mark-sent`| Mark a notification as sent      |
-| POST   | `/api/notifications/send-now`     | Send a notification immediately (admin only) |
+> The job `checkScheduledNotifications` (see bottom of `server/routes.ts`) runs every minute with `setInterval`.
 
-### Resources (File Uploads)
+---
 
-| Method | Endpoint                         | Description                        |
-| ------ | -------------------------------- | ---------------------------------- |
-| GET    | `/api/events/:eventId/resources` | Get all resources for an event     |
-| POST   | `/api/events/:eventId/resources` | Upload a resource for an event (admin only) |
+## Deployment
+1.  Ensure `MONGODB_URI` and e-mail ENV variables are set.
+2.  `npm run build`  – builds client and bundles server into `dist/`.
+3.  Copy `dist/` to your server (or use docker).  Example Dockerfile (simplified):
+    ```Dockerfile
+    FROM node:22-slim AS build
+    WORKDIR /app
+    COPY . .
+    RUN npm ci && npm run build
 
+    FROM node:22-slim
+    WORKDIR /app
+    COPY --from=build /app/dist ./dist
+    COPY package.json package-lock.json ./
+    RUN npm ci --omit=dev
+    ENV NODE_ENV=production
+    EXPOSE 5001
+    CMD ["node", "dist/index.js"]
+    ```
+4.  Point your reverse-proxy (Nginx, Caddy, …) to port **5001**.
 
+---
 
+## Contributing
+1. Fork the repository and create your feature branch (`git checkout -b feat/my-feature`).
+2. Commit your changes (`git commit -am 'feat: add amazing feature'`).
+3. Push to the branch (`git push origin feat/my-feature`).
+4. Open a Pull Request – make sure `npm run check` passes and that you have added tests if needed.
+
+### Coding style
+* Front-end components live in `client/src/components` or `…/pages`.
+* Keep **types** close to the business logic – leverage the shared Zod schema where possible.
+* Run `npm run check` before pushing to guarantee type-safety.
+
+---
