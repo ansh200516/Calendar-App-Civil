@@ -20,11 +20,10 @@ A full-featured calendar application.
 
 A full-featured calendar application built with a modern tech stack. This application allows users to manage their schedules, events, and tasks efficiently. It features a secure authentication system and a responsive user interface.
 
-*(Further details will be added as I explore the codebase.)*
 
 ## Tech Stack
 
-- **Frontend:** React, TypeScript, Vite, Tailwind CSS, TanStack Query, Radix UI (likely via shadcn/ui)
+- **Frontend:** React, TypeScript, Vite, Tailwind CSS, TanStack Query, Radix UI 
 - **Backend:** Node.js, Express.js, TypeScript
 - **Database:** MongoDB
 - **Authentication:** Passport.js, JWT, bcrypt
