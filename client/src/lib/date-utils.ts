@@ -1,6 +1,3 @@
-// src/lib/date-utils.ts
-// (Keep all your existing functions)
-
 export function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
   return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -41,20 +38,20 @@ export function generateCalendarDays(year: number, month: number): Array<{ day: 
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
 
-  // Previous month days to display
+
   const daysInPrevMonth = getDaysInMonth(year, month - 1);
   const prevMonthDays = Array.from({ length: firstDay }, (_, i) => ({
     day: daysInPrevMonth - firstDay + i + 1,
     currentMonth: false
   }));
 
-  // Current month days
+
   const currentMonthDays = Array.from({ length: daysInMonth }, (_, i) => ({
     day: i + 1,
     currentMonth: true
   }));
 
-  // Next month days to display (to fill out the grid)
+
   const totalDaysToShow = Math.ceil((firstDay + daysInMonth) / 7) * 7;
   const nextMonthDays = Array.from({ length: totalDaysToShow - (prevMonthDays.length + currentMonthDays.length) }, (_, i) => ({
     day: i + 1,
@@ -66,7 +63,7 @@ export function generateCalendarDays(year: number, month: number): Array<{ day: 
 
 export function getTimeAgo(dateStr: string | Date): string {
   const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
-  if (isNaN(date.getTime())) return 'Invalid date'; // Handle invalid date strings
+  if (isNaN(date.getTime())) return 'Invalid date'; 
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
 
@@ -90,19 +87,17 @@ export function getTimeAgo(dateStr: string | Date): string {
   return diffSeconds < 5 ? 'just now' : `${diffSeconds} seconds ago`;
 }
 
-// --- ADDED FUNCTION ---
+
 /**
  * Combines a date string (YYYY-MM-DD) and a time string (HH:MM) into a Date object.
- * Assumes the date and time are in the server's local timezone unless timezone handling is added.
+  * Assumes the date and time are in the server's local timezone unless timezone handling is added.
  * @param dateStr - The date string in YYYY-MM-DD format.
  * @param timeStr - The time string in HH:MM format.
  * @returns A Date object representing the combined date and time.
  */
 export function combineDateTime(dateStr: string, timeStr: string): Date {
-    // Basic implementation assuming local time interpretation of date/time strings
-    // Ensure timeStr includes seconds for robustness, default to :00 if not present
+
     const timeParts = timeStr.split(':');
     const formattedTime = `${timeParts[0]}:${timeParts[1] || '00'}:00`;
     return new Date(`${dateStr}T${formattedTime}`);
 }
-// --- END ADDED FUNCTION ---

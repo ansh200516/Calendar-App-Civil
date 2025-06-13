@@ -32,7 +32,6 @@ export const useNotifications = create<NotificationsState>((set, get) => ({
       
       const notifications = await res.json();
       
-      // Calculate unread count
       const unreadCount = notifications.filter((n: Notification) => !n.sent).length;
       
       set({ 
@@ -75,8 +74,7 @@ export const useNotifications = create<NotificationsState>((set, get) => ({
     try {
       const { notifications } = get();
       const unreadNotifications = notifications.filter(n => !n.sent);
-      
-      // Mark each unread notification as read
+                  
       await Promise.all(
         unreadNotifications.map(notification => 
           apiRequest('PUT', `/api/notifications/${notification.id}/mark-sent`)

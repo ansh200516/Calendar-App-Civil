@@ -5,10 +5,10 @@ import type { InsertUser, InsertEvent, InsertNotification } from "@shared/schema
 async function seedDatabase() {
   console.log("Seeding database...");
 
-  // Check if users already exist
+
   const existingUsers = await db.select().from(users);
   if (existingUsers.length === 0) {
-    // Create admin user
+
     const adminUser: InsertUser = {
       username: 'admin@example.com',
       password: 'admin123',
@@ -18,7 +18,7 @@ async function seedDatabase() {
     const [user] = await db.insert(users).values(adminUser).returning();
     console.log("Created admin user:", user.id);
     
-    // Create events
+
     const currentYear = new Date().getFullYear();
     const demoEvents: InsertEvent[] = [
       {
@@ -116,7 +116,7 @@ async function seedDatabase() {
     const createdEvents = await db.insert(events).values(demoEvents).returning();
     console.log(`Created ${createdEvents.length} events`);
     
-    // Create notifications
+
     const finalProjectEvent = createdEvents.find(e => e.title === 'Final Project');
     const finalExamEvent = createdEvents.find(e => e.title === 'Final Exam');
     const deptMeetingEvent = createdEvents.find(e => e.title === 'Department Meeting');
@@ -150,7 +150,7 @@ async function seedDatabase() {
   }
 }
 
-// Run the seed function
+
 seedDatabase().catch(error => {
   console.error("Error seeding database:", error);
   process.exit(1);

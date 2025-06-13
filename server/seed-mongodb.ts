@@ -9,13 +9,13 @@ async function seedMongoDB() {
     const result = await connectToMongoDB();
     const { collections } = result;
     
-    // Check if users collection is empty
+
     const userCount = await collections.users.countDocuments();
     
     if (userCount === 0) {
       console.log("Database is empty. Creating seed data...");
       
-      // Create admin user
+
       const userResult = await collections.users.insertOne({
         username: 'admin@example.com',
         password: 'admin123',
@@ -25,7 +25,7 @@ async function seedMongoDB() {
       const userId = userResult.insertedId;
       console.log(`Created admin user with ID: ${userId}`);
       
-      // Insert events
+
       const currentYear = new Date().getFullYear();
       const events = [
         {
@@ -123,7 +123,7 @@ async function seedMongoDB() {
       const eventResult = await collections.events.insertMany(events);
       console.log(`Created ${Object.keys(eventResult.insertedIds).length} events`);
       
-      // Get specific events for notifications
+
       const finalProject = await collections.events.findOne({ title: 'Final Project' });
       const finalExam = await collections.events.findOne({ title: 'Final Exam' });
       const deptMeeting = await collections.events.findOne({ title: 'Department Meeting' });
@@ -167,5 +167,5 @@ async function seedMongoDB() {
   }
 }
 
-// Run the seed function
+
 seedMongoDB().catch(console.error);

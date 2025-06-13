@@ -36,7 +36,6 @@ export default function Calendar() {
     loadEvents();
   }, [fetchEvents, toast]);
 
-  // Update month display when current date changes
   useEffect(() => {
     setCurrentMonth(currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }));
   }, [currentDate]);
@@ -63,7 +62,6 @@ export default function Calendar() {
 
   return (
     <div>
-      {/* Calendar Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div className="mb-4 sm:mb-0">
           <h2 className="text-2xl font-heading font-bold text-gray-800">Calendar</h2>
@@ -91,7 +89,6 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* Calendar Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 space-y-4 sm:space-y-0">
         <div className="flex items-center space-x-2">
           <button 
@@ -155,17 +152,14 @@ export default function Calendar() {
         </div>
       </div>
       
-      {/* Calendar View */}
       <CalendarView 
         events={events} 
         currentDate={currentDate}
         currentView={currentView}
       />
       
-      {/* Upcoming Events */}
       <UpcomingEvents />
       
-      {/* Event Details Modal */}
       {selectedEvent && (
         <EventDetailsModal 
           event={selectedEvent} 

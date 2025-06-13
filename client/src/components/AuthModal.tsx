@@ -22,7 +22,7 @@ export default function AuthModal() {
         description: "Welcome to the Academic Calendar app",
       });
     } catch (error) {
-      // Error is already handled in the auth store
+      console.error("Login error:", error);
     }
   };
 

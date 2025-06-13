@@ -76,7 +76,6 @@ export const useAuth = create<AuthState>((set) => ({
           error: null
         });
       } else {
-        // Not authenticated but not an error
         set({ 
           user: null,
           isAuthenticated: false,

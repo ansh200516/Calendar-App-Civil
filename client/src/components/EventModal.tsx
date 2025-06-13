@@ -1,8 +1,8 @@
-// src/components/EventModal.tsx
+
 import { useState } from "react";
-import { Event, EventCategory, InsertEvent, eventCategories, InsertNotification } from "@shared/schema"; // Import InsertNotification
+import { Event, EventCategory, InsertEvent, eventCategories, InsertNotification } from "@shared/schema";  
 import { useEvents } from "@/store/events";
-import { useNotifications } from "@/store/notifications"; // Import useNotifications
+import { useNotifications } from "@/store/notifications"; 
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { formatDateForInput, combineDateTime } from "@/lib/date-utils"; // Assuming combineDateTime exists or create it
+import { formatDateForInput, combineDateTime } from "@/lib/date-utils"; 
 
 interface EventModalProps {
     event?: Event;
@@ -21,7 +21,7 @@ interface EventModalProps {
 
 export default function EventModal({ event, onClose, onSaved }: EventModalProps) {
     const { createEvent, updateEvent } = useEvents();
-    const { createNotification } = useNotifications(); // Get createNotification function
+    const { createNotification } = useNotifications(); 
     const { toast } = useToast();
 
     const [title, setTitle] = useState(event?.title || '');
@@ -30,7 +30,7 @@ export default function EventModal({ event, onClose, onSaved }: EventModalProps)
     const [time, setTime] = useState(event?.time || '09:00');
     const [description, setDescription] = useState(event?.description || '');
     const [location, setLocation] = useState(event?.location || '');
-    const [sendNotification, setSendNotification] = useState(false); // Default to false for new events
+    const [sendNotification, setSendNotification] = useState(false); 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const isEditing = !!event;
@@ -49,17 +49,15 @@ export default function EventModal({ event, onClose, onSaved }: EventModalProps)
         };
 
         try {
-            let savedEvent: Event | null = null; // Variable to hold the saved/updated event
+            let savedEvent: Event | null = null; 
 
             if (isEditing && event) {
-                savedEvent = await updateEvent(event.id, eventData); // Assume updateEvent returns the updated event
+                savedEvent = await updateEvent(event.id, eventData); 
                 toast({
                     title: "Event updated",
                     description: "Event has been updated successfully",
                 });
             } else {
-                // --- IMPORTANT: Ensure createEvent returns the newly created event with its ID ---
-                // You might need to modify useEvents store's createEvent implementation
                 savedEvent = await createEvent(eventData);
                 toast({
                     title: "Event created",
@@ -67,13 +65,9 @@ export default function EventModal({ event, onClose, onSaved }: EventModalProps)
                 });
             }
 
-            // --- Add Notification Logic ---
             if (savedEvent && sendNotification) {
-                // Construct the notification payload
                 const notificationData: InsertNotification = {
-                    eventId: savedEvent.id, // Link notification to the event
-                    // Combine date and time for notifyAt. Handle potential timezone issues if necessary.
-                    // Ensure combineDateTime exists and works correctly.
+                    eventId: savedEvent.id, 
                     notifyAt: combineDateTime(savedEvent.date, savedEvent.time),
                     message: `New Event${savedEvent.category !== 'other' ? ` (${savedEvent.category})` : ''}: ${savedEvent.title}`,
                 };
@@ -91,15 +85,13 @@ export default function EventModal({ event, onClose, onSaved }: EventModalProps)
                         description: notificationError instanceof Error ? notificationError.message : "Failed to send notification for the event.",
                         variant: "destructive",
                     });
-                    // Decide if you want to stop execution or just warn the user
                 }
             }
-            // --- End Notification Logic ---
 
             if (onSaved) {
                 onSaved();
             } else {
-                onClose(); // Close modal only after everything succeeds (or handle errors appropriately)
+                onClose(); 
             }
         } catch (error) {
             toast({
@@ -196,10 +188,7 @@ export default function EventModal({ event, onClose, onSaved }: EventModalProps)
                         />
                       </div>
 
-                    {/* Only show notification checkbox for creating new events OR make it smarter */}
-                    {/* For simplicity, let's allow it always, but maybe reset on edit? */}
-                    {/* If editing, maybe it should mean "Send update notification"? Needs clarification */}
-                    {!isEditing && ( // Example: Only show for new events
+                    {!isEditing && ( 
                         <div className="flex items-center space-x-2">
                             <Checkbox
                                 id="send-notification"
@@ -235,9 +224,7 @@ export default function EventModal({ event, onClose, onSaved }: EventModalProps)
     );
 }
 
-// Helper function (place in date-utils.ts or similar)
-// Ensure this handles timezones appropriately if needed.
-// This basic version assumes local time.
+
 export function combineDateTime(dateStr: string, timeStr: string): Date {
     return new Date(`${dateStr}T${timeStr}`);
 }

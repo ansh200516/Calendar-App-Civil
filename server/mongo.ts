@@ -1,11 +1,9 @@
 import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
 dotenv.config();
-// Create a MongoDB connection string
 
 const uri = process.env.MONGODB_URI || "mongodb://localhost:27017";
 
-// Create a MongoClient with a MongoClientOptions object
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -14,7 +12,6 @@ const client = new MongoClient(uri, {
   }
 });
 
-// Database and collections
 let db: any;
 let usersCollection: any;
 let eventsCollection: any;
@@ -23,19 +20,15 @@ let notificationsCollection: any;
 
 export async function connectToMongoDB() {
   try {
-    // Connect the client to the server
     await client.connect();
     
-    // Access the database
     db = client.db("calendar-app");
     
-    // Access collections
     usersCollection = db.collection("users");
     eventsCollection = db.collection("events");
     resourcesCollection = db.collection("resources");
     notificationsCollection = db.collection("notifications");
     
-    // Set up indexes
     await usersCollection.createIndex({ username: 1 }, { unique: true });
     await eventsCollection.createIndex({ createdById: 1 });
     await resourcesCollection.createIndex({ eventId: 1 });

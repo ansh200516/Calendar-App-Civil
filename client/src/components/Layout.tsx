@@ -18,7 +18,6 @@ export default function Layout({ children }: Props) {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Mobile Menu Button */}
       <div className="md:hidden flex items-center p-4 border-b">
         <Button
           variant="ghost"
@@ -32,7 +31,6 @@ export default function Layout({ children }: Props) {
         </h1>
       </div>
 
-      {/* Mobile Sidebar */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <SheetContent side="left" className="p-0">
           <div className="p-6 border-b border-gray-200">
@@ -56,7 +54,6 @@ export default function Layout({ children }: Props) {
         </SheetContent>
       </Sheet>
 
-      {/* Desktop Sidebar */}
       <aside className="hidden md:block bg-white border-r border-gray-200 w-64 flex-shrink-0 fixed h-full">
         <div className="p-6">
           <h1 className="text-2xl font-heading font-bold text-primary-500">
@@ -69,7 +66,6 @@ export default function Layout({ children }: Props) {
         {renderNav()}
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 md:ml-64 px-4 py-4 md:px-8 md:py-8 bg-gray-50">
         {children}
       </main>

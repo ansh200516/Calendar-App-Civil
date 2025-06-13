@@ -1,7 +1,5 @@
-// src/components/StudentNotifications.tsx (or wherever it lives)
-// Verify this component correctly uses useNotifications hook and displays the badge
 import { useEffect } from "react";
-import { useNotifications } from "@/store/notifications"; // Ensure this hook is imported
+import { useNotifications } from "@/store/notifications";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +7,6 @@ import { getTimeAgo } from "@/lib/date-utils";
 import { Bell, Check } from "lucide-react";
 
 export default function StudentNotifications() {
-  // Make sure useNotifications hook is called here
   const { notifications, fetchNotifications, markAllAsRead, unreadCount } = useNotifications();
   const { toast } = useToast();
 
@@ -47,9 +44,7 @@ export default function StudentNotifications() {
         </Button>
       </div>
 
-      {/* Notification List */}
       <Card className="mb-6">
-        {/* This header correctly displays the unread count badge */}
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Recent Notifications</CardTitle>
           {unreadCount > 0 && (
@@ -91,16 +86,6 @@ export default function StudentNotifications() {
             </div>
           )}
         </div>
-
-        {/* Removed Load More for consistency
-        {notifications.length > 5 && (
-          <CardContent className="border-t border-gray-200 bg-gray-50 flex justify-center py-4">
-            <Button variant="link" className="text-sm text-primary-600 hover:text-primary-900 font-medium">
-              Load More
-            </Button>
-          </CardContent>
-        )}
-         */}
       </Card>
     </div>
   );

@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import NotFound from "@/pages/not-found";
 import Calendar from "@/pages/Calendar";
 import Admin from "@/pages/Admin";
-import StudentNotifications from "@/pages/StudentNotifications"; // Make sure the path and casing are correct
+import StudentNotifications from "@/pages/StudentNotifications";
 import Notifications from "@/pages/Notifications";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminSignup from "@/pages/AdminSignup";
@@ -25,10 +25,8 @@ function App() {
 
   useEffect(() => {
     const initApp = async () => {
-      // Check if user is already authenticated
       await checkAuth();
       
-      // Fetch initial data
       try {
         await fetchEvents();
         await fetchNotifications();
@@ -47,7 +45,6 @@ function App() {
   }, [checkAuth, fetchEvents, fetchNotifications, toast]);
   
   useEffect(() => {
-    // Redirect to home if not authenticated and trying to access admin pages
     if (ready && !isAuthenticated && 
         (location === "/admin")) {
       navigate("/");
@@ -58,7 +55,6 @@ function App() {
     }
   }, [ready, isAuthenticated, location, navigate]);
 
-  // Show loading state until initialization is complete
   if (!ready) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -70,11 +66,8 @@ function App() {
     );
   }
 
-  // Check if the current path is an admin-specific route
   const isAdminRoute = location === "/admin" || location === "/notifications";
-  // No need for AuthModal anymore as we're using dedicated login pages
   
-  // Admin authentication routes
   if (location === "/admin/login") {
     return (
       <>
@@ -97,10 +90,8 @@ function App() {
     <>
       <Layout>
         <Switch>
-          {/* Public routes - accessible without login */}
           <Route path="/" component={Calendar} />
           
-          {/* Admin routes - require authentication */}
           <Route path="/admin">
             {isAuthenticated ? <Admin /> : <AdminLogin />}
           </Route>

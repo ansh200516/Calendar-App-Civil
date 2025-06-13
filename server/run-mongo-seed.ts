@@ -1,23 +1,20 @@
 import { MongoClient } from 'mongodb';
 import { connectToMongoDB } from './mongo';
 
-/**
- * This script populates the MongoDB database with initial data.
- * It should be run once during the initial setup of the MongoDB database.
- */
+
 async function seedMongoDB() {
   let client;
   try {
     console.log("Starting MongoDB seed process...");
     const { collections } = await connectToMongoDB();
     
-    // Check if users already exist
+
     const users = await collections.users.find({}).toArray();
     
     if (users.length === 0) {
       console.log("Creating initial data...");
       
-      // Create admin user
+
       const adminUser = {
         username: 'admin@example.com',
         password: 'admin123',
@@ -28,7 +25,6 @@ async function seedMongoDB() {
       const userId = userResult.insertedId;
       console.log(`Created admin user with ID: ${userId}`);
       
-      // Create initial events
       const currentYear = new Date().getFullYear();
       const events = [
         {
@@ -126,7 +122,6 @@ async function seedMongoDB() {
       const eventsResult = await collections.events.insertMany(events);
       console.log(`Created ${Object.keys(eventsResult.insertedIds).length} events`);
       
-      // Create notifications
       const finalProject = await collections.events.findOne({ title: 'Final Project' });
       const finalExam = await collections.events.findOne({ title: 'Final Exam' });
       const deptMeeting = await collections.events.findOne({ title: 'Department Meeting' });
@@ -167,5 +162,4 @@ async function seedMongoDB() {
   }
 }
 
-// Run the seed function
 seedMongoDB().catch(console.error);

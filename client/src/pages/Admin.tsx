@@ -26,7 +26,6 @@ export default function Admin() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteEventId, setDeleteEventId] = useState<number | null>(null);
   
-  // Redirect if not admin
   useEffect(() => {
     if (user && !user.isAdmin) {
       navigate("/");
@@ -71,7 +70,6 @@ export default function Admin() {
     }
   };
 
-  // Get category badge
   const getCategoryBadge = (category: string) => {
     switch (category) {
       case 'deadline':
@@ -85,7 +83,6 @@ export default function Admin() {
     }
   };
 
-  // If not admin, don't render anything
   if (user && !user.isAdmin) {
     return null;
   }
@@ -104,7 +101,6 @@ export default function Admin() {
         </Button>
       </div>
       
-      {/* Event Management */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Event Management</CardTitle>
@@ -190,7 +186,6 @@ export default function Admin() {
         </CardContent>
       </Card>
       
-      {/* Notification Management */}
       <Card>
         <CardHeader>
           <CardTitle>Notification Management</CardTitle>
@@ -253,7 +248,6 @@ export default function Admin() {
         </CardContent>
       </Card>
       
-      {/* Modals */}
       {createModalOpen && (
         <EventModal onClose={() => setCreateModalOpen(false)} />
       )}

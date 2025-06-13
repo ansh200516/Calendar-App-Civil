@@ -37,29 +37,24 @@ app.use((req, res, next) => {
   next();
 });
 
-// Import MongoDB connection
 import { connectToMongoDB } from './mongo';
 import { MongoStorage } from './mongo-storage';
 import { storage as memStorage } from './storage';
 
 (async () => {
   try {
-    // Connect to MongoDB
     await connectToMongoDB();
     console.log('Connected to MongoDB successfully');
     
-    // Switch to MongoDB storage
     // @ts-ignore - Intentionally overriding the storage
     global.storage = new MongoStorage();
   } catch (error) {
     console.error('Failed to connect to MongoDB:', error);
     console.log('Falling back to in-memory storage');
-    // Keep using the memory storage
   }
   
   const server = await registerRoutes(app);
   
-  // Serve static files from uploads directory
   const uploadsPath = path.join(process.cwd(), 'uploads');
   app.use('/uploads', express.static(uploadsPath));
 
@@ -71,18 +66,12 @@ import { storage as memStorage } from './storage';
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
   const port = 5001;
   server.listen({
     port,

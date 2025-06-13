@@ -53,5 +53,5 @@ export default function DeleteConfirmModal({ eventId, onConfirm, onCancel, isOpe
   );
 }
 
-// Add import at the top
+
 import { useState } from "react";

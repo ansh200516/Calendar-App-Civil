@@ -1,13 +1,9 @@
-// src/routes.ts
+
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { MongoStorage } from "./mongo-storage";
 import bcrypt from 'bcrypt';
-// import mongoose from 'mongoose'; // Remove if not used directly
-// import jwt from 'jsonwebtoken'; // Remove if not used directly
-// const JWT_SECRET="ab212b4b53"; // Remove if not used directly
-// import { storage as defaultStorage } from "./storage"; // Remove if not used directly
 import { insertEventSchema, insertNotificationSchema, insertResourceSchema, insertUserSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -15,16 +11,13 @@ import session from "express-session";
 import MemoryStore from "memorystore";
 import { upload, deleteFile } from "./file-upload";
 import { checkAdminIp } from "./middlewares/checkAdminIp";
-// import { Schema } from "mongoose"; // Remove if not used directly
 
-// --- Email Sending Imports and Setup ---
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import fs from 'fs';
+dotenv.config();
 
-dotenv.config(); // Load environment variables
 
-// Hardcoded email list for notifications
 const NOTIFICATION_RECIPIENTS = ['ce1231156@iitd.ac.in', 'ansh.singh.160305@gmail.com',  "ce1230248@iitd.ac.in",
   "ce1230285@iitd.ac.in",
   "ce1230023@iitd.ac.in",
@@ -87,17 +80,12 @@ if (EMAIL_ENABLED && process.env.EMAIL_USER && process.env.EMAIL_PASS && process
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-    // Optional: Add timeout or other configurations
-    // tls: {
-    //   rejectUnauthorized: false // Use only for testing with self-signed certs
-    // }
   });
 
-  // Verify connection configuration
   transporter.verify(function(error, success) {
     if (error) {
       console.error("Email transporter verification failed:", error);
-      transporter = null; // Disable email if verification fails
+      transporter = null;
     } else {
       console.log("Email transporter is ready to send messages");
     }
@@ -107,7 +95,6 @@ if (EMAIL_ENABLED && process.env.EMAIL_USER && process.env.EMAIL_PASS && process
   console.warn('Email notifications are disabled or configuration is missing.');
 }
 
-// Async function to send email
 async function sendNotificationEmail(subject: string, textBody: string, htmlBody?: string) {
   if (!transporter) {
     console.warn('Email transporter not available. Skipping email notification.');
@@ -131,13 +118,10 @@ async function sendNotificationEmail(subject: string, textBody: string, htmlBody
     console.log('Notification email sent: %s', info.messageId);
   } catch (error) {
     console.error('Error sending notification email:', error);
-    // Consider implementing retry logic or logging to a more robust system
   }
 }
-// --- End Email Sending Setup ---
 
 
-// Extend Express session to include user property
 declare module 'express-session' {
   interface SessionData {
     user: {
@@ -149,24 +133,20 @@ declare module 'express-session' {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Use global storage if available, otherwise use default
   const storage = new MongoStorage();
-  // Set up user sessions
   const SessionStore = MemoryStore(session);
   app.use(
     session({
-      cookie: { maxAge: 86400000 }, // 24 hours
+      cookie: { maxAge: 86400000 },
       store: new SessionStore({
-        checkPeriod: 86400000, // prune expired entries every 24h
+        checkPeriod: 86400000,
       }),
       resave: false,
       saveUninitialized: false,
-      secret: process.env.SESSION_SECRET || 'calendar-app-secret', // Use env var
+      secret: process.env.SESSION_SECRET || 'calendar-app-secret',
     })
   );
 
-  // --- Auth routes (keep as is) ---
-  // ... (signup, login, logout, user routes remain the same) ...
   app.post('/api/auth/signup', checkAdminIp, async (req: Request, res: Response) => {
     try {
       let { username, password, isAdmin } = req.body;
@@ -237,8 +217,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
-  // --- Event routes (keep as is) ---
-  // ... (GET /events, GET /events/:id, POST /events, PUT /events/:id, DELETE /events/:id remain the same) ...
   app.get('/api/events', async (req: Request, res: Response) => {
     try {
       const events = await storage.getEvents();
@@ -252,8 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/events/:id', async (req: Request, res: Response) => {
     try {
       const id = req.params.id;
-      // Basic validation (consider using a library like validator or stricter regex)
-      if (!id || !/^[a-f\d]{24}$/i.test(id)) { // Example: Check if it looks like a MongoDB ObjectId
+      if (!id || !/^[a-f\d]{24}$/i.test(id)) {
           return res.status(400).json({ message: 'Invalid event ID format' });
       }
       const event = await storage.getEvent(id);
@@ -267,7 +244,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auth middleware to check if user is admin
   const isAdmin = (req: Request, res: Response, next: NextFunction) => {
     const user = req.session.user;
     if (!user) {
@@ -285,7 +261,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
           return res.status(401).json({ message: 'User ID not found' });
       }
-      // Ensure createdById is handled correctly by storage or passed explicitly
       const eventData = { ...req.body, createdById: userId };
       const validatedData = insertEventSchema.parse(eventData);
       const event = await storage.createEvent(validatedData);
@@ -310,11 +285,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!eventExists) {
           return res.status(404).json({ message: 'Event not found' });
       }
-      // Add validation for req.body if needed
       const updatedEvent = await storage.updateEvent(id, req.body);
       return res.status(200).json(updatedEvent);
     } catch (error) {
-      // Add ZodError handling if validating req.body
       console.error('Error updating event:', error);
       return res.status(500).json({ message: 'Internal server error' });
     }
@@ -330,7 +303,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!eventExists) {
           return res.status(404).json({ message: 'Event not found' });
       }
-      // Add logic here if deleting an event should delete associated resources/notifications
       await storage.deleteEvent(id);
       return res.status(200).json({ message: 'Event deleted successfully' });
     } catch (error) {
@@ -339,10 +311,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // --- Notification routes ---
   app.get('/api/notifications', async (req: Request, res: Response) => {
     try {
-      // Add filtering/pagination if needed
       const notifications = await storage.getNotifications();
       return res.status(200).json(notifications);
     } catch (error) {
@@ -351,27 +321,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // --- MODIFIED: Post Notification Route ---
   app.post('/api/notifications', isAdmin, async (req: Request, res: Response) => {
     try {
       const validatedData = insertNotificationSchema.parse(req.body);
 
-      // Create notification in DB
       const notification = await storage.createNotification(validatedData);
 
-      // --- Send Email Notification ---
-      // Trigger email sending asynchronously (don't wait for it to finish)
       sendNotificationEmail(
           `New Notification: ${notification.message.substring(0, 30)}...`, // Subject
           `A new notification has been created:\n\n${notification.message}\n\nScheduled for: ${notification.notifyAt.toLocaleString()}`, // Text Body
           `<p>A new notification has been created:</p><blockquote>${notification.message}</blockquote><p>Scheduled for: ${notification.notifyAt.toLocaleString()}</p>` // HTML Body
       ).catch(err => {
-          // Log email sending errors separately, but don't fail the API response
           console.error("Background email sending failed:", err);
       });
-      // --- End Send Email ---
 
-      return res.status(201).json(notification); // Return DB notification object
+      return res.status(201).json(notification);
 
     } catch (error) {
       if (error instanceof ZodError) {
@@ -383,7 +347,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ message: 'Internal server error' });
     }
   });
-  // --- End MODIFIED Post Notification Route ---
 
   app.put('/api/notifications/:id/mark-sent', async (req: Request, res: Response) => {
     try {
@@ -395,7 +358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!notificationExists) {
           return res.status(404).json({ message: 'Notification not found' });
       }
-      await storage.markNotificationAsSent(id); // Assume this updates the 'sent' field
+      await storage.markNotificationAsSent(id);
       return res.status(200).json({ message: 'Notification marked as sent' });
     } catch (error) {
       console.error('Error marking notification as sent:', error);
@@ -409,13 +372,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Notification message is required' });
     }
 
-    // For simplicity, we don't save these immediate announcements to the DB
-    // If you want to keep a record, you'd call storage.createNotification here
-
     let emailSent = false;
     if (sendEmail && EMAIL_ENABLED) {
         try {
-            // Send email immediately (don't wait for it)
             sendNotificationEmail(
                 `Announcement`,
                 message,
@@ -424,25 +383,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             emailSent = true;
         } catch (emailError) {
             console.error('Error initiating announcement email:', emailError);
-            // Don't fail the request, just log the error
         }
     }
-
-    // Placeholder for immediate browser push (would need WebSocket or Push API)
-    // if (sendBrowser) {
-    //   // Trigger push notification to connected clients/service workers
-    //   console.log("Attempting to trigger immediate browser notification (requires WebSocket/Push API)");
-    // }
 
     return res.status(200).json({
         message: "Announcement processed.",
         emailAttempted: sendEmail && EMAIL_ENABLED,
-        // browserPushAttempted: sendBrowser // Indicate if browser push was attempted
     });
 });
-  // --- Resource routes (keep as is, but add ID validation) ---
-  // ... (GET /events/:eventId/resources, POST /events/:eventId/resources, GET /resources/:id/download, DELETE /resources/:id) ...
-  // Add ID validation similar to events/notifications routes
+
     app.get('/api/events/:eventId/resources', async (req: Request, res: Response) => {
       try {
           const eventId = req.params.eventId;
@@ -464,8 +413,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/events/:eventId/resources', isAdmin, upload.single('file'), async (req: Request, res: Response) => {
       try {
           const eventId = req.params.eventId;
-          if (!eventId || !/^[a-f\d]{24}$/i.test(eventId)) {
-             // If file was uploaded but event ID invalid, delete the orphaned file
+          if (!eventId || !/^[a-f\d]{24}$/i.test(eventId)) {        
              if (req.file) { await deleteFile(`uploads/${req.file.filename}`).catch(console.error); }
               return res.status(400).json({ message: 'Invalid event ID format' });
           }
@@ -486,29 +434,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           const resourceData = {
             eventId: eventId,
-            filename: req.file.filename,      // Keep unique generated name if needed
+            filename: req.file.filename,
             originalName: req.file.originalname,
-            // Store the RELATIVE path within the persistent disk
-            filePath: relativeFilePath,       // STORE THIS (e.g., uploads/file-123.pdf)
+            filePath: relativeFilePath,
             fileType: req.file.mimetype,
             fileSize: req.file.size,
             uploadedById: userId
         };
 
-          // Validate resourceData if needed (using insertResourceSchema)
-          // const validatedResourceData = insertResourceSchema.parse(resourceData); // Might need adjustment
-          const resource = await storage.createResource(resourceData); // Pass validated data if parsed
+          const resource = await storage.createResource(resourceData);
           return res.status(201).json(resource);
       } catch (error) {
-           // If file was uploaded but error occurred, try deleting the orphaned file
           if (req.file) { await deleteFile(`uploads/${req.file.filename}`).catch(console.error); }
-          // Add ZodError handling if validating resourceData
           console.error('Error uploading resource:', error);
           return res.status(500).json({ message: 'Internal server error' });
       }
   });
 
-// Inside GET /api/resources/:id/download
 app.get('/api/resources/:id/download', async (req: Request, res: Response) => {
   try {
       const id = req.params.id;
@@ -520,48 +462,34 @@ app.get('/api/resources/:id/download', async (req: Request, res: Response) => {
           return res.status(404).json({ message: 'Resource record not found' });
       }
 
-      // --- Get Persistent Disk Path ---
       const mountPath = process.env.RENDER_DISK_MOUNT_PATH;
       if (!mountPath) {
           console.error("FATAL: RENDER_DISK_MOUNT_PATH environment variable is not set!");
           return res.status(500).json({ message: 'Server configuration error (disk path missing)' });
       }
 
-      // --- Construct Full Path ---
-      // Assumes resource.filePath is stored like "uploads/file-abc.pdf"
       const filePath = path.join(mountPath, resource.filePath);
-      console.log(`Attempting to download file from: ${filePath}`); // Logging
+      console.log(`Attempting to download file from: ${filePath}`);
 
-      // --- Check File Existence (Crucial Debug Step) ---
       try {
-          // Use fs.promises.access for async check
-          await fs.promises.access(filePath, fs.constants.R_OK); // Check read access
+          await fs.promises.access(filePath, fs.constants.R_OK);
           console.log(`File exists and is readable: ${filePath}`);
       } catch (err: any) {
            console.error(`File not found or not readable at path ${filePath}:`, err);
-           // Send a specific 404 if the file itself is missing on disk
            return res.status(404).json({ message: 'File not found on server storage.' });
       }
 
-      // --- Send File ---
-      // Set header *before* calling download/sendFile
-       res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(resource.originalName)}`);
 
-      // Use res.download (it handles Content-Type etc.)
       return res.download(filePath, resource.originalName, (err) => {
           if (err) {
               console.error(`Error during file download stream for ${filePath}:`, err);
-              // Avoid sending another response if headers were already sent
               if (!res.headersSent) {
-                   // Check error type if possible
                    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-                      // This shouldn't happen if the access check above passed, but maybe a race condition?
                        return res.status(404).json({ message: 'File disappeared before sending' });
                    } else {
                        return res.status(500).json({ message: 'Error sending file' });
                    }
               } else {
-                   // If headers are sent, the connection might be broken. Nothing much to do here.
                    console.error("Headers already sent, could not send error response for download failure.");
               }
           } else {
@@ -588,15 +516,10 @@ app.get('/api/resources/:id/download', async (req: Request, res: Response) => {
               return res.status(404).json({ message: 'Resource not found' });
           }
 
-          // Attempt to delete file first
           try {
-            // Pass the relative path stored in the DB
             await deleteFile(resource.filePath);
         } catch (fileError) {
             console.error(`Failed to delete file from filesystem: ${resource.filePath}. Error: ${fileError}. Proceeding to delete database record.`);
-            // Decide if this is critical. If the DB record is deleted, the file is orphaned.
-            // You might want to return 500 here if file deletion fails.
-            // return res.status(500).json({ message: 'Failed to delete file from filesystem, database record not deleted' });
         }
 
           await storage.deleteResource(id);
@@ -607,16 +530,13 @@ app.get('/api/resources/:id/download', async (req: Request, res: Response) => {
       }
   });
 
-    // --- Scheduled Notification Sender (Simple Interval Timer) ---
-  // WARNING: Not suitable for production scale. Consider using a proper job scheduler (node-cron, BullMQ)
-  // or a dedicated microservice for reliable notification delivery.
   const checkScheduledNotifications = async () => {
-    if (!EMAIL_ENABLED) return; // Don't run if emails are globally disabled
+    if (!EMAIL_ENABLED) return;
 
     console.log('Checking for scheduled notifications to send...');
     try {
         const now = new Date();
-        const dueNotifications = await storage.getDueNotifications(now); // Needs new storage method
+        const dueNotifications = await storage.getDueNotifications(now);
 
         if (dueNotifications.length === 0) {
             console.log('No due notifications found.');
@@ -627,7 +547,6 @@ app.get('/api/resources/:id/download', async (req: Request, res: Response) => {
 
         for (const notification of dueNotifications) {
             try {
-                // Fetch related event details if necessary (for message customization)
                 let eventDetails = '';
                 if (notification.eventId) {
                     const event = await storage.getEvent(notification.eventId);
@@ -640,18 +559,14 @@ app.get('/api/resources/:id/download', async (req: Request, res: Response) => {
                 const body = `${notification.message}\n\nThis notification was scheduled for ${notification.notifyAt.toLocaleString()}.`;
                 const htmlBody = `<p>${notification.message}</p><p><small>This notification was scheduled for ${notification.notifyAt.toLocaleString()}${eventDetails}.</small></p>`;
 
-                // Send email
                 await sendNotificationEmail(subject, body, htmlBody);
 
-                // Mark notification as sent in DB
                 await storage.markNotificationAsSent(notification.id);
                 console.log(`Sent and marked notification ${notification.id}`);
 
             } catch (error) {
                 console.error(`Error processing notification ${notification.id}:`, error);
-                // Optionally mark as failed or retry later
             }
-             // Add a small delay to avoid overwhelming the email server
              await new Promise(resolve => setTimeout(resolve, 500));
         }
     } catch (error) {
@@ -659,21 +574,17 @@ app.get('/api/resources/:id/download', async (req: Request, res: Response) => {
     }
   };
 
-  // Run check every minute (adjust interval as needed)
-  // Ensure storage methods like getDueNotifications and markNotificationAsSent exist
   if (EMAIL_ENABLED) {
-      setInterval(checkScheduledNotifications, 60 * 1000); // Check every 60 seconds
+      setInterval(checkScheduledNotifications, 60 * 1000);
       console.log('Scheduled notification checker started.');
   } else {
       console.log('Scheduled notification checker is disabled (EMAIL_NOTIFICATIONS_ENABLED=false).');
   }
 
-  // Serve static files from uploads directory
   app.use('/uploads', (req: Request, res: Response, next: NextFunction) => {
     if (!req.session.user) {
       return res.status(401).json({ message: 'Authentication required to access files' });
     }
-    // Consider adding more granular access control if needed
     next();
   });
 

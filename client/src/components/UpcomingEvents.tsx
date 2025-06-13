@@ -7,25 +7,21 @@ import { Clock } from "lucide-react";
 export default function UpcomingEvents() {
   const { events, setSelectedEvent } = useEvents();
 
-  // Get upcoming events sorted by date/time
   const upcomingEvents = useMemo(() => {
     const now = new Date();
-    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const today = now.toISOString().split('T')[0]; 
     
     return events
       .filter(event => event.date >= today)
       .sort((a, b) => {
-        // Sort by date first
         if (a.date !== b.date) {
           return a.date < b.date ? -1 : 1;
         }
-        // If same date, sort by time
         return a.time < b.time ? -1 : 1;
       })
-      .slice(0, 3); // Limit to 3 events
+      .slice(0, 3); 
   }, [events]);
-
-  // Get category badge color
+      
   const getCategoryBadge = (category: string) => {
     switch (category) {
       case 'deadline':

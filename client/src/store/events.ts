@@ -131,16 +131,14 @@ export const useEvents = create<EventsState>((set, get) => ({
   getUpcomingEvents: (count = 3) => {
     const { events } = get();
     const now = new Date();
-    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const today = now.toISOString().split('T')[0]; 
     
     return events
       .filter(event => event.date >= today)
       .sort((a, b) => {
-        // Sort by date first
         if (a.date !== b.date) {
           return a.date < b.date ? -1 : 1;
         }
-        // If same date, sort by time
         return a.time < b.time ? -1 : 1;
       })
       .slice(0, count);

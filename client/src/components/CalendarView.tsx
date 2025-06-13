@@ -24,7 +24,7 @@ export default function CalendarView({ events, currentDate, currentView }: Calen
     return { year, month, calendarDays };
   }, [currentDate]);
 
-  // Group events by date for easier lookup
+
   const eventsByDate = useMemo(() => {
     const eventMap = new Map<string, Event[]>();
     
@@ -51,12 +51,10 @@ export default function CalendarView({ events, currentDate, currentView }: Calen
     const dayEvents = eventsByDate.get(dateStr) || [];
     
     if (dayEvents.length === 0) {
-      // Only open the "No events" modal when clicked and there are no events
       setSelectedDate({ date: clickedDate, dateStr });
     }
   };
 
-  // Get CSS class based on event category
   const getEventClassName = (category: string) => {
     switch (category) {
       case 'deadline':
@@ -70,7 +68,6 @@ export default function CalendarView({ events, currentDate, currentView }: Calen
     }
   };
 
-  // Check if the day is today
   const isToday = (day: number, currentMonth: boolean) => {
     if (!currentMonth) return false;
     
@@ -80,12 +77,10 @@ export default function CalendarView({ events, currentDate, currentView }: Calen
            today.getFullYear() === year;
   };
 
-  // Render month view
   if (currentView === 'month') {
     return (
       <>
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          {/* Weekday Headers */}
           <div className="grid grid-cols-7 text-center text-gray-500 bg-gray-50 border-b border-gray-200 py-2">
             <div>Sun</div>
             <div>Mon</div>
@@ -96,7 +91,6 @@ export default function CalendarView({ events, currentDate, currentView }: Calen
             <div>Sat</div>
           </div>
           
-          {/* Calendar Grid */}
           <div className="grid grid-cols-7 border-b border-gray-200 divide-x divide-gray-200">
             {calendarDays.map((day, i) => {
               const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day.day).padStart(2, '0')}`;
@@ -129,7 +123,7 @@ export default function CalendarView({ events, currentDate, currentView }: Calen
                             key={event.id}
                             className={`px-1 py-0.5 mb-1 text-xs rounded cursor-pointer hover:bg-opacity-90 ${getEventClassName(event.category)}`}
                             onClick={(e) => {
-                              e.stopPropagation(); // Prevent the day click handler from firing
+                              e.stopPropagation();
                               handleEventClick(event);
                             }}
                           >
@@ -139,7 +133,6 @@ export default function CalendarView({ events, currentDate, currentView }: Calen
                         ))
                       ) : (
                         <div className="text-xs text-gray-400 mt-2 italic">
-                          {/* Empty placeholder - "No events" message will be shown when clicked */}
                         </div>
                       )}
                     </>
@@ -150,7 +143,6 @@ export default function CalendarView({ events, currentDate, currentView }: Calen
           </div>
         </div>
         
-        {/* Show "No events" dialog when a day with no events is clicked */}
         {selectedDate && (
           <Dialog open={true} onOpenChange={() => setSelectedDate(null)}>
             <DialogContent>
@@ -182,7 +174,6 @@ export default function CalendarView({ events, currentDate, currentView }: Calen
     );
   }
 
-  // For day view, show events for the selected day
   if (currentView === 'day') {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
     const dayEvents = eventsByDate.get(dateStr) || [];
@@ -230,7 +221,6 @@ export default function CalendarView({ events, currentDate, currentView }: Calen
               <div 
                 className="text-center py-8 cursor-pointer hover:bg-gray-50 rounded"
                 onClick={() => {
-                  // Open the "No events" modal even for day view
                   setSelectedDate({ date: currentDate, dateStr });
                 }}
               >
@@ -241,7 +231,6 @@ export default function CalendarView({ events, currentDate, currentView }: Calen
           </div>
         </div>
         
-        {/* Show "No events" dialog when clicked */}
         {selectedDate && (
           <Dialog open={true} onOpenChange={() => setSelectedDate(null)}>
             <DialogContent>
@@ -273,13 +262,10 @@ export default function CalendarView({ events, currentDate, currentView }: Calen
     );
   }
   
-  // For week view, show events for the entire week
   if (currentView === 'week') {
-    // Calculate the first day of the week (Sunday)
     const firstDayOfWeek = new Date(currentDate);
     firstDayOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
     
-    // Generate 7 days of the week
     const weekDays = Array.from({ length: 7 }, (_, i) => {
       const day = new Date(firstDayOfWeek);
       day.setDate(firstDayOfWeek.getDate() + i);
@@ -324,7 +310,7 @@ export default function CalendarView({ events, currentDate, currentView }: Calen
                       key={event.id}
                       className={`px-2 py-1 mb-1 text-xs rounded cursor-pointer hover:bg-opacity-90 ${getEventClassName(event.category)}`}
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevent day click handler from firing
+                        e.stopPropagation();
                         handleEventClick(event);
                       }}
                     >
@@ -342,7 +328,6 @@ export default function CalendarView({ events, currentDate, currentView }: Calen
           </div>
         </div>
         
-        {/* Show "No events" dialog when a day with no events is clicked */}
         {selectedDate && (
           <Dialog open={true} onOpenChange={() => setSelectedDate(null)}>
             <DialogContent>
@@ -374,7 +359,6 @@ export default function CalendarView({ events, currentDate, currentView }: Calen
     );
   }
   
-  // Fallback in case of unsupported view
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden p-8 text-center">
       <p className="text-gray-500">Unknown view type.</p>

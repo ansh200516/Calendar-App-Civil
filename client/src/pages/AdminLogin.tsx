@@ -40,7 +40,7 @@ export default function AdminLogin() {
         title: 'Logged in successfully',
         description: 'Welcome back, admin!',
       });
-      navigate('/admin'); // 👈 Redirect to Admin page
+      navigate('/admin'); 
     } catch (error) {
       toast({
         variant: 'destructive',

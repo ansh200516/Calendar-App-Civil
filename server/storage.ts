@@ -9,25 +9,21 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 
 export interface IStorage {
-  // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
-  // Event methods
   getEvents(): Promise<Event[]>;
   getEvent(id: number): Promise<Event | undefined>;
   createEvent(event: InsertEvent): Promise<Event>;
   updateEvent(id: number, event: Partial<InsertEvent>): Promise<Event | undefined>;
   deleteEvent(id: number): Promise<boolean>;
   
-  // Resource methods
   getResourcesByEventId(eventId: number): Promise<Resource[]>;
   getResource(id: number): Promise<Resource | undefined>;
   createResource(resource: InsertResource): Promise<Resource>;
   deleteResource(id: number): Promise<boolean>;
   
-  // Notification methods
   getNotifications(): Promise<Notification[]>;
   getNotification(id: number): Promise<Notification | undefined>;
   createNotification(notification: InsertNotification): Promise<Notification>;
@@ -54,14 +50,12 @@ export class MemStorage implements IStorage {
     this.resourceId = 1;
     this.notificationId = 1;
     
-    // Set up some default users
     this.createUser({
       username: 'admin@example.com',
       password: 'admin123',
       isAdmin: true
     });
     
-    // Set up demo events
     const currentYear = new Date().getFullYear();
     const demoEvents: InsertEvent[] = [
       {
@@ -158,7 +152,6 @@ export class MemStorage implements IStorage {
     
     demoEvents.forEach(event => this.createEvent(event));
     
-    // Create mock notifications
     const notificationData: InsertNotification[] = [
       {
         eventId: 8, // Final Project
@@ -180,7 +173,6 @@ export class MemStorage implements IStorage {
     notificationData.forEach(notification => this.createNotification(notification));
   }
 
-  // User methods
   async getUser(id: number): Promise<User | undefined> {
     return this.users.get(id);
   }
@@ -202,7 +194,6 @@ export class MemStorage implements IStorage {
     return user;
   }
   
-  // Event methods
   async getEvents(): Promise<Event[]> {
     return Array.from(this.events.values());
   }
@@ -237,7 +228,6 @@ export class MemStorage implements IStorage {
     return this.events.delete(id);
   }
   
-  // Resource methods
   async getResourcesByEventId(eventId: number): Promise<Resource[]> {
     return Array.from(this.resources.values()).filter(
       (resource) => resource.eventId === eventId
@@ -264,7 +254,6 @@ export class MemStorage implements IStorage {
     return this.resources.delete(id);
   }
   
-  // Notification methods
   async getNotifications(): Promise<Notification[]> {
     return Array.from(this.notifications.values());
   }
@@ -410,8 +399,6 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Import the MongoStorage implementation
 import { MongoStorage } from './mongo-storage';
 
-// Use MongoStorage instead of DatabaseStorage or MemStorage
-export const storage = new MongoStorage(); // Temporarily use MemStorage until MongoDB is connected
+export const storage = new MongoStorage();
